@@ -1,0 +1,23 @@
+# Reproducible CAPRA demo environment.
+# Tested with Python 3.9.7, CUDA 11.8, and PyTorch 2.3.0.
+--extra-index-url https://download.pytorch.org/whl/cu118
+
+torch==2.3.0+cu118
+numpy==1.24.3
+pandas==2.2.2
+scipy==1.12.0
+scikit-learn==1.5.0
+anndata==0.10.8
+scanpy==1.10.1
+h5py==3.14.0
+threadpoolctl==3.6.0
+umap-learn==0.5.7
+leidenalg==0.11.0
+igraph==1.0.0
+torch-geometric==2.6.1
+torchdiffeq==0.2.5
+matplotlib==3.9.4
+seaborn==0.13.2
+tqdm==4.66.4
+pyyaml==6.0.3
+ipykernel==6.30.1
