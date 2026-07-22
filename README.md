@@ -56,14 +56,6 @@ The requirements target the tested CUDA 11.8 setup with PyTorch 2.3.0. On a
 CPU-only machine, replace the PyTorch line in `requirements.txt` with
 `torch==2.3.0` before installation.
 
-### Notebook Kernel
-
-To run the bundled notebook from Jupyter, register the environment as a kernel:
-
-```bash
-python -m ipykernel install --user --name capra --display-name "CAPRA"
-```
-
 ### Import Check
 
 From the repository root:
