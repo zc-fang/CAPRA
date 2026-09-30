@@ -7,6 +7,9 @@ Source:
 bm2-lab/scPerturBench. GitHub repository.
 URL: https://github.com/bm2-lab/scPerturBench.git
 Accessed: 2026-04-28.
+License: GNU GPL v3; see ../LICENSE. Preserve all applicable upstream notices.
+Modified: 2026-09-30. Input/output paths and working-copy handling updated.
+The original source commit was not recorded.
 
 Local modifications in this repository mainly concern path resolution,
 environment setup, and benchmark integration.
@@ -54,8 +57,9 @@ matplotlib.rcParams["savefig.transparent"] = False
 warnings.filterwarnings("ignore")
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DATASETS_ROOT = REPO_ROOT / "data" / "datasets"
-DEFAULT_SCGPT_MODEL_DIR = REPO_ROOT / "data" / "scgpt"
+DATASETS_ROOT = resolve_data_root() / "datasets"
+RESULTS_ROOT = resolve_results_root()
+DEFAULT_SCGPT_MODEL_DIR = resolve_data_root() / "scgpt"
 
 # settings for data prcocessing
 pad_token = "<pad>"
@@ -122,7 +126,7 @@ def get_source_adata_path(dataset_name):
 
 
 def get_scgpt_dir(dataset_name):
-    return DATASETS_ROOT / dataset_name / "hvg5000" / "scGPT"
+    return RESULTS_ROOT / dataset_name / "hvg5000" / "scGPT"
 
 
 def get_gears_splits_dir(dataset_name):
@@ -364,7 +368,10 @@ def train_scGPT(DataSet, istrain=True, seed = 1):
     adata = sc.read_h5ad(get_source_adata_path(DataSet))
     adata.uns['log1p'] = {}; adata.uns['log1p']["base"] = None
     adata = doGearsFormat(adata)
-    pert_data = PertData('./data') # specific saved folder   download gene2go_all.pkl
+    released_split = get_gears_splits_dir(DataSet) / f"train_simulation_{seed}_0.8.pkl"
+    if not released_split.is_file():
+        raise FileNotFoundError(released_split)
+    pert_data = PertData('./data') # writable method workspace
     pert_data.new_data_process(dataset_name = 'train', adata = adata) # specific dat
     pert_data.load(data_path = './data/train') # load the processed data, the path is saved folder + dataset_name
     

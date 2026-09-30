@@ -6,6 +6,9 @@
 # bm2-lab/scPerturBench. GitHub repository.
 # URL: https://github.com/bm2-lab/scPerturBench.git
 # Accessed: 2026-04-28.
+# License: GNU GPL v3; see ../LICENSE. Preserve applicable upstream notices.
+# Modified: 2026-09-30. Attribution/license notices clarified.
+# Original source commit was not recorded.
 #
 # Local modifications in this repository mainly concern path resolution,
 # environment setup, and benchmark integration.

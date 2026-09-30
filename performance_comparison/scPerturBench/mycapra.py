@@ -7,6 +7,9 @@ Source benchmark framework:
 bm2-lab/scPerturBench. GitHub repository.
 URL: https://github.com/bm2-lab/scPerturBench.git
 Accessed: 2026-04-28.
+License: GNU GPL v3; see ../LICENSE. Preserve all applicable upstream notices.
+Modified: 2026-09-30. Input/output paths and working-copy handling updated.
+The original source commit was not recorded.
 
 Local modifications in this repository mainly concern CAPRA-specific method
 integration, path resolution, and benchmark execution.
@@ -23,10 +26,12 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CAPRA_SOURCE_ROOT = REPO_ROOT / "capra"
-DATASETS_ROOT = REPO_ROOT / "data" / "datasets"
-CAPRA_OUTPUT_ROOT = Path(os.environ.get("CAPRA_OUTPUT_ROOT", DATASETS_ROOT)).expanduser().resolve()
-CAPRA_WORKSPACE_ROOT = Path(os.environ.get("CAPRA_WORKSPACE_ROOT", REPO_ROOT / "tmp")).expanduser().resolve()
-EMBEDDING_PATH = REPO_ROOT / "data" / "gene_embedding" / "processed" / "genept_embeddings.pkl"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from myUtil1 import resolve_data_root, resolve_results_root, resolve_workspace_root
+DATASETS_ROOT = resolve_data_root() / "datasets"
+CAPRA_OUTPUT_ROOT = resolve_results_root()
+CAPRA_WORKSPACE_ROOT = resolve_workspace_root()
+EMBEDDING_PATH = Path(os.environ.get("CAPRA_EMBEDDING_PATH", resolve_data_root() / "gene_embedding/processed/genept_embeddings.pkl")).expanduser().resolve()
 CAPRA_GLOBAL_SEED = 24
 
 if str(CAPRA_SOURCE_ROOT) not in sys.path:
@@ -83,11 +88,9 @@ def trainModel(DataSet, seed):
     filein = trainDir / "splits" / f"train_simulation_{split_seed}_0.8.pkl"
 
     if not os.path.exists(adata_path):
-        print(f"Dataset file not found: {adata_path}")
-        return
+        raise FileNotFoundError(adata_path)
     if not os.path.exists(filein):
-        print(f"Split file not found: {filein}")
-        return
+        raise FileNotFoundError(filein)
 
     adata = sc.read_h5ad(adata_path)
     adata.obs["condition"] = adata.obs["condition"].astype(str).apply(lambda x: condition_sort(x)).astype("category")

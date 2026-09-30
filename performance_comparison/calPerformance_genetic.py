@@ -137,7 +137,7 @@ def calPerfor(X):
                     pairwise_df = Distance.onesided_distances(adata, groupby="Expcategory", selected_group='imputed', groups=["stimulated"])  ### 已经转换好了，不需要1-pairwise_df进行转换
                 perf = round(pairwise_df['stimulated'], 4)
                 if metric == 'sym_kldiv':
-                    perf = np.log2(perf + 1)
+                    perf = np.log2(perf + 1)       
         except Exception as e:
             print (e)
             print (X, metric); perf = np.nan
@@ -180,7 +180,8 @@ def f_calPerfor(X):
 def ff_calPerfor(DataSet, condition_column = 'perturbation', control_tag = 'control'):
     mylist_parameter = []
     print (DataSet)
-    fileout = REPO_ROOT / f"{DataSet}.capra.performance.tsv"
+    # fileout = DATASETS_ROOT / DataSet / "performance.tsv"
+    fileout = f"/home/fzc/projects/202604_CAPRA/data/datasets/{DataSet}/lm.performance.tsv"
     for seed in seeds:
         for method in methods:
             mylist_parameter.append([DataSet, method, seed, condition_column, control_tag])
@@ -196,7 +197,7 @@ doSubSample = True
 control_list = ['control', 'MCF7_control_1.0', 'A549_control_1.0', 'K562_control_1.0']
 seeds = [1, 2, 3, 4, 5]
 # methods= ['scGPT', 'GEARS', 'GenePert', 'scouter', 'capra']
-methods= ['capra']
+methods= ['linearModel']
 
 SinglePertDataSets = ['Adamson', "Frangieh", "TianActivation", "TianInhibition", "Replogle_exp7", "Replogle_exp8", "Papalexi", "Replogle_RPE1essential", "Replogle_K562essential"]
 CombPertDataSets = ['Norman', 'Wessels', 'Schmidt', "Replogle_exp6"]
@@ -206,5 +207,5 @@ metrics = ['mse', 'pearson_distance', 'edistance', 'sym_kldiv', 'wasserstein']
 
 if __name__ == '__main__':
     print ('hello, world')
-    for DataSet in tqdm(chain(["Replogle_K562essential"])):
+    for DataSet in tqdm(chain(SinglePertDataSets + CombPertDataSets)):
         ff_calPerfor(DataSet)

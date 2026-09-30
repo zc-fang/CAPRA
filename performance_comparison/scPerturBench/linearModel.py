@@ -7,6 +7,9 @@ Source:
 bm2-lab/scPerturBench. GitHub repository.
 URL: https://github.com/bm2-lab/scPerturBench.git
 Accessed: 2026-04-28.
+License: GNU GPL v3; see ../LICENSE. Preserve all applicable upstream notices.
+Modified: 2026-09-30. Input/output paths and working-copy handling updated.
+The original source commit was not recorded.
 
 Local modifications in this repository mainly concern path resolution,
 environment setup, and benchmark integration.
@@ -22,7 +25,10 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DATASETS_ROOT = REPO_ROOT / "data" / "datasets"
+sys.path.insert(0, str(SCRIPT_DIR))
+from myUtil1 import resolve_data_root, resolve_results_root
+DATASETS_ROOT = resolve_data_root() / "datasets"
+RESULTS_ROOT = resolve_results_root()
 R_SCRIPT_PATH = SCRIPT_DIR / "linearModel.r"
 CONDA_EXE = os.environ.get("CONDA_EXE", "conda")
 
@@ -38,15 +44,15 @@ warnings.filterwarnings('ignore')
 
 
 def get_linear_model_dir(dataset_name):
-    return DATASETS_ROOT / dataset_name / "hvg5000" / "linearModel"
+    return RESULTS_ROOT / dataset_name / "hvg5000" / "linearModel"
 
 
 def get_gears_dir(dataset_name):
-    return DATASETS_ROOT / dataset_name / "hvg5000" / "GEARS"
+    return get_gears_work_dir(dataset_name)
 
 
 def get_train_mean_dir(dataset_name):
-    return DATASETS_ROOT / dataset_name / "hvg5000" / "trainMean"
+    return RESULTS_ROOT / dataset_name / "hvg5000" / "trainMean"
 
 def normalize_condition_names(obs):
   import pandas as pd
@@ -56,6 +62,7 @@ def normalize_condition_names(obs):
 
 
 def preData1(DataSet, seed, isComb=False):
+    prepare_gears_workspace(DataSet, seed)
     dirName = get_linear_model_dir(DataSet)
     dirName.mkdir(parents=True, exist_ok=True)
     os.chdir(dirName)
@@ -111,7 +118,7 @@ def runLinearModel(DataSet, seed):
     os.chdir(dirName)
     dirOut = dirName / f"savedModels{seed}"
     dirOut.mkdir(parents=True, exist_ok=True)
-    cmd = [CONDA_EXE, "run", "-n", "linear_perturbation_prediction", "Rscript", str(R_SCRIPT_PATH), str(seed), str(dirName)]
+    cmd = [CONDA_EXE, "run", "-n", os.environ.get("CAPRA_R_ENV", "plot"), "Rscript", str(R_SCRIPT_PATH), str(seed), str(dirName)]
     print(" ".join(cmd))
     subprocess.run(cmd, check=True)
 
@@ -128,7 +135,7 @@ def generateH5ad(DataSet, seed = 1):
     os.chdir(dirName)
     filein = dirName / f"savedModels{seed}" / "pred.tsv"
     exp = pd.read_csv(filein, sep='\t', index_col=0)
-    filein = get_gears_dir(DataSet) / f"savedModels{seed}" / "result.h5ad"
+    filein = get_gears_result_path(DataSet, seed)
     adata = sc.read_h5ad(filein)
     expGene = np.intersect1d(adata.var_names, exp.columns)
     pertGenes = np.intersect1d(adata.obs['perturbation'].unique(), exp.index)

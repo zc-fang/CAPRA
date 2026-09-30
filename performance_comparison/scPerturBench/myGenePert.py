@@ -7,6 +7,9 @@ Source:
 bm2-lab/scPerturBench. GitHub repository.
 URL: https://github.com/bm2-lab/scPerturBench.git
 Accessed: 2026-04-28.
+License: GNU GPL v3; see ../LICENSE. Preserve all applicable upstream notices.
+Modified: 2026-09-30. Input/output paths and working-copy handling updated.
+The original source commit was not recorded.
 
 Local modifications in this repository mainly concern path resolution,
 environment setup, and benchmark integration.
@@ -18,8 +21,11 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DATASETS_ROOT = REPO_ROOT / "data" / "datasets"
-EMBEDDING_PATH = REPO_ROOT / "data" / "gene_embedding" / "GenePT_v2_raw" / "GenePT_gene_embedding_ada_text.pickle"
+sys.path.insert(0, str(SCRIPT_DIR))
+from myUtil1 import resolve_data_root, resolve_results_root, get_gears_result_path
+DATASETS_ROOT = resolve_data_root() / "datasets"
+RESULTS_ROOT = resolve_results_root()
+EMBEDDING_PATH = Path(os.environ.get("GENEPERT_EMBEDDING_PATH", resolve_data_root() / "gene_embedding/GenePT_v2_raw/GenePT_gene_embedding_ada_text.pickle")).expanduser().resolve()
 GENEPERT_REPO = Path(os.environ.get("GENEPERT_REPO", str(REPO_ROOT.parent / "GenePert")))
 
 if str(SCRIPT_DIR) not in sys.path:
@@ -61,7 +67,7 @@ def get_gears_dir(dataset_name):
 
 
 def get_genepert_dir(dataset_name):
-    return DATASETS_ROOT / dataset_name / "hvg5000" / "GenePert"
+    return RESULTS_ROOT / dataset_name / "hvg5000" / "GenePert"
 
 
 def get_gears_processed_adata_path(dataset_name):
@@ -135,7 +141,7 @@ def generateH5ad(DataSet, seed = 1):
     os.chdir(dirName)
     filein = dirName / f"savedModels{seed}" / "pred.tsv"
     exp = pd.read_csv(filein, sep='\t', index_col=0)
-    filein = get_gears_dir(DataSet) / f"savedModels{seed}" / "result.h5ad"
+    filein = get_gears_result_path(DataSet, seed)
     adata = sc.read_h5ad(filein)
     expGene = np.intersect1d(adata.var_names, exp.columns)
     pertGenes = np.intersect1d(adata.obs['perturbation'].unique(), exp.index)

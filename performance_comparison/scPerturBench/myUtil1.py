@@ -10,6 +10,10 @@ Accessed: 2026-04-28.
 
 Local modifications in this repository mainly concern path resolution and
 benchmark integration.
+
+License: GNU GPL v3; see ../LICENSE. Original applicable notices remain in force.
+Modified: 2026-09-30. Keep source datasets read-only and route generated files
+to separate run/result directories. The original source commit was not recorded.
 """
 
 import subprocess, os, sys, re, glob
@@ -31,11 +35,84 @@ from itertools import chain
 import warnings
 warnings.filterwarnings('ignore')
 import pickle
+import shutil
 
-WORKSPACE_ROOT = Path(os.environ.get("CAPRA_WORKSPACE_ROOT", Path(__file__).resolve().parents[2])).resolve()
-SOURCE_REPO_ROOT = Path(os.environ.get("CAPRA_SOURCE_REPO_ROOT", WORKSPACE_ROOT)).resolve()
-REPO_ROOT = WORKSPACE_ROOT
-DATASETS_ROOT = SOURCE_REPO_ROOT / 'data' / 'datasets'
+SOURCE_REPO_ROOT = Path(os.environ.get("CAPRA_SOURCE_REPO_ROOT", Path(__file__).resolve().parents[2])).resolve()
+REPO_ROOT = SOURCE_REPO_ROOT
+
+
+def resolve_data_root():
+    """Return the read-only data root (contains datasets/ and gene_embedding/)."""
+    return Path(os.environ.get('CAPRA_DATA_ROOT', SOURCE_REPO_ROOT / 'data')).expanduser().resolve()
+
+
+def _writable_root(env_name, default):
+    root = Path(os.environ.get(env_name, default)).expanduser().resolve()
+    data_root = resolve_data_root()
+    if root == data_root or data_root in root.parents:
+        raise ValueError(f'{env_name} must be outside the read-only data tree: {root}')
+    return root
+
+
+def resolve_results_root():
+    # Retain the older CAPRA_OUTPUT_ROOT alias for existing CAPRA runs.
+    return _writable_root('CAPRA_RESULTS_ROOT', os.environ.get('CAPRA_OUTPUT_ROOT', SOURCE_REPO_ROOT / 'tmp/benchmark_results'))
+
+
+def resolve_workspace_root():
+    return _writable_root('CAPRA_WORKSPACE_ROOT', SOURCE_REPO_ROOT / 'tmp/benchmark_runs')
+
+
+WORKSPACE_ROOT = resolve_workspace_root()
+DATASETS_ROOT = resolve_data_root() / 'datasets'
+RESULTS_ROOT = resolve_results_root()
+
+
+def get_gears_input_dir(dataset_name):
+    return DATASETS_ROOT / str(dataset_name) / 'hvg5000/GEARS'
+
+
+def get_gears_work_dir(dataset_name):
+    return RESULTS_ROOT / str(dataset_name) / 'hvg5000/GEARS'
+
+
+def get_gears_result_path(dataset_name, seed):
+    """Read a generated GEARS reference, or an existing released result."""
+    relative = Path(f'savedModels{int(seed)}') / 'result.h5ad'
+    generated = get_gears_work_dir(dataset_name) / relative
+    if generated.is_file():
+        return generated
+    released = get_gears_input_dir(dataset_name) / relative
+    if released.is_file():
+        return released
+    raise FileNotFoundError(f'GEARS reference result not found: {generated} or {released}')
+
+
+def prepare_gears_workspace(dataset_name, seed):
+    """Copy released GEARS inputs before a library writes caches or split files."""
+    source = get_gears_input_dir(dataset_name) / 'data'
+    processed = source / 'train/perturb_processed.h5ad'
+    split_name = f'train_simulation_{int(seed)}_0.8.pkl'
+    source_split = source / 'train/splits' / split_name
+    for required in (processed, source_split):
+        if not required.is_file():
+            raise FileNotFoundError(f'Released benchmark input required: {required}')
+    destination = get_gears_work_dir(dataset_name)
+    working_data = destination / 'data'
+    if not working_data.exists():
+        destination.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(source, working_data)
+    elif not (working_data / 'train').exists():
+        # Restore the released inputs after an explicit redo cleared its cache.
+        shutil.copytree(source / 'train', working_data / 'train')
+    elif not (working_data / 'train/perturb_processed.h5ad').is_file():
+        raise RuntimeError(f'Incomplete benchmark working copy: {working_data}')
+    # A library may have removed its cached split; restore the released split,
+    # rather than silently generating a different evaluation partition.
+    target_split = working_data / 'train/splits' / split_name
+    target_split.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source_split, target_split)
+    return destination
 
 def clean_condition(condition):
     return condition.replace('+ctrl', '').replace('ctrl+', '').strip()
@@ -105,11 +182,15 @@ def preData(adata, domaxNumsPerturb=0, domaxNumsControl=0, minNums = 50, min_cel
     return filterNoneNums, filterCells, filterMT, filterMinNums, adata
 
 def calDEG(DataSet='Adamson', condition_column='perturbation', control_tag='control', adata=None, fileout=None, return_dict=False):
+    if fileout is not None:
+        fileout = Path(fileout).expanduser().resolve()
+        if fileout == resolve_data_root() or resolve_data_root() in fileout.parents:
+            raise ValueError('Computed DEG outputs must be outside the read-only data tree')
     if adata is None:
         dataset_dir = DATASETS_ROOT / DataSet
         filein = dataset_dir / 'filter_hvg5000_logNor.h5ad'
         if fileout is None:
-            fileout = dataset_dir / 'DEG_hvg5000.pkl'
+            fileout = WORKSPACE_ROOT / 'computed_deg' / DataSet / 'DEG_hvg5000.pkl'
         adata = sc.read_h5ad(filein)
     else:
         adata = adata.copy()
@@ -132,7 +213,8 @@ def calDEG(DataSet='Adamson', condition_column='perturbation', control_tag='cont
         mydict[perturbation] = final_result
     if fileout is not None:
         import pickle
-        with open(fileout, 'wb') as fout:
+        fileout.parent.mkdir(parents=True, exist_ok=True)
+        with fileout.open('wb') as fout:
             pickle.dump(mydict, fout)
     if return_dict or fileout is None:
         return mydict

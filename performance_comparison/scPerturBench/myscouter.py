@@ -7,6 +7,9 @@ Source:
 bm2-lab/scPerturBench. GitHub repository.
 URL: https://github.com/bm2-lab/scPerturBench.git
 Accessed: 2026-04-28.
+License: GNU GPL v3; see ../LICENSE. Preserve all applicable upstream notices.
+Modified: 2026-09-30. Input/output paths and working-copy handling updated.
+The original source commit was not recorded.
 
 Local modifications in this repository mainly concern path resolution,
 environment setup, and benchmark integration.
@@ -25,12 +28,13 @@ import random
 from scouter import Scouter, ScouterData
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DATASETS_ROOT = REPO_ROOT / 'data' / 'datasets'
-EMBEDDING_PATH = REPO_ROOT / 'data' / 'gene_embedding' / 'processed' / 'genept_embeddings.pkl'
+DATASETS_ROOT = resolve_data_root() / "datasets"
+RESULTS_ROOT = resolve_results_root()
+EMBEDDING_PATH = Path(os.environ.get("CAPRA_EMBEDDING_PATH", resolve_data_root() / "gene_embedding/processed/genept_embeddings.pkl")).expanduser().resolve()
 
 
 def get_scouter_dir(dataset_name):
-    return DATASETS_ROOT / dataset_name / 'hvg5000' / 'scouter'
+    return RESULTS_ROOT / dataset_name / 'hvg5000' / 'scouter'
 
 
 def get_gears_dir(dataset_name):

@@ -8,6 +8,9 @@ Source:
 bm2-lab/scPerturBench. GitHub repository.
 URL: https://github.com/bm2-lab/scPerturBench.git
 Accessed: 2026-04-28.
+License: GNU GPL v3; see ../LICENSE. Preserve all applicable upstream notices.
+Modified: 2026-09-30. Input/output paths and working-copy handling updated.
+The original source commit was not recorded.
 
 Local modifications in this repository mainly concern path resolution,
 environment setup, and benchmark integration.
@@ -27,7 +30,8 @@ from itertools import chain
 sc.settings.verbosity = 3
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DATASETS_ROOT = REPO_ROOT / 'data' / 'datasets'
+DATASETS_ROOT = resolve_data_root() / "datasets"
+RESULTS_ROOT = resolve_results_root()
 
 
 def get_source_adata_path(dataset_name):
@@ -35,11 +39,11 @@ def get_source_adata_path(dataset_name):
 
 
 def get_gears_dir(dataset_name):
-    return DATASETS_ROOT / dataset_name / 'hvg5000' / 'GEARS'
+    return get_gears_work_dir(dataset_name)
 
 def trainModel(adata, issplit = False, seed = 1):
     pert_data = PertData('./data') # specific saved folder   download gene2go_all.pkl
-    if not os.path.isfile('data/train/data_pyg/cell_graphs.pkl'):
+    if not os.path.isfile('data/train/perturb_processed.h5ad'):
         pert_data.new_data_process(dataset_name = 'train', adata = adata) # specific dataset name and adata object
     pert_data.load(data_path = './data/train') # load the processed data, the path is saved folder + dataset_name
     pert_data.prepare_split(split = 'simulation', seed = seed, train_gene_set_size=.8) # get data split with seed
@@ -68,15 +72,16 @@ def doGearsFormat(adata):
     return adata
 
 def runGears(DataSet, issplit=False, redo=False, seed = 1):
-    dirName = get_gears_dir(DataSet)
+    dirName = prepare_gears_workspace(DataSet, seed)
     if not dirName.is_dir():
         dirName.mkdir(parents=True)
     os.chdir(dirName)
     if redo and os.path.isdir('data/train'):
         shutil.rmtree('data/train')
+        prepare_gears_workspace(DataSet, seed)
 
     if os.path.isfile('savedModels{}/model.pt'.format(seed)): return 
-    if not os.path.isfile('data/train/data_pyg/cell_graphs.pkl'):
+    if not os.path.isfile('data/train/perturb_processed.h5ad'):
         adata = sc.read_h5ad(get_source_adata_path(DataSet))
         adata.uns['log1p'] = {}; adata.uns['log1p']["base"] = None
         adata = doGearsFormat(adata)
