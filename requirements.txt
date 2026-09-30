@@ -1,8 +1,6 @@
 # Reproducible CAPRA demo environment.
-# Tested with Python 3.9.7, CUDA 11.8, and PyTorch 2.3.0.
---extra-index-url https://download.pytorch.org/whl/cu118
-
-torch==2.3.0+cu118
+# Install the CUDA 11.8 torch wheel first, as described in README.md.
+torch==2.3.0
 numpy==1.24.3
 pandas==2.2.2
 scipy==1.12.0
@@ -21,3 +19,4 @@ seaborn==0.13.2
 tqdm==4.66.4
 pyyaml==6.0.3
 ipykernel==6.30.1
+notebook==7.3.3
