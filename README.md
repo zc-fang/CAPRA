@@ -24,7 +24,7 @@ python -m ipykernel install --user --name capra --display-name "Python (CAPRA)"
 python -m notebook
 ```
 
-Open [the measured Norman example](demo/demo_norman_subset.ipynb) or [the realistic own-data example](demo/demo_own_data.ipynb), select **Python (CAPRA)**, and run all cells. Both notebooks are committed with executed outputs and show input checks, API-generated splits, training, prediction, the response plot, saved files, and checkpoint reload. The own-data notebook constructs a self-contained `8,568 x 5,025` matrix with realistic dimensions and uses the real GenePT vectors bundled in `demo/data/`.
+Open [the measured Norman example](demo/demo_norman_subset.ipynb) or [the own-data example](demo/demo_own_data.ipynb), select **Python (CAPRA)**, and run all cells. 
 
 ## Data collection
 
