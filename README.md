@@ -24,7 +24,7 @@ python -m ipykernel install --user --name capra --display-name "Python (CAPRA)"
 python -m notebook
 ```
 
-Open [the measured Norman example](demo/demo_norman_subset.ipynb) or [the own-data example](demo/demo_own_data.ipynb), select **Python (CAPRA)**, and run all cells. 
+Open [the measured Norman example](demo/demo_norman_subset.ipynb) or [the own-data example](demo/demo_own_data.ipynb), select **Python (CAPRA)**, and run all cells.
 
 ## Data collection
 
