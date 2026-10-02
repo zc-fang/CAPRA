@@ -24,7 +24,14 @@ python -m ipykernel install --user --name capra --display-name "Python (CAPRA)"
 python -m notebook
 ```
 
-Open [the Norman example](demo/demo_norman_subset.ipynb) or [the custom-data example](demo/demo_own_data.ipynb), select **Python (CAPRA)**, and run all cells. Both notebooks include executed outputs and describe their inputs, results and saved files.
+Open [the measured Norman example](demo/demo_norman_subset.ipynb) or [the realistic own-data example](demo/demo_own_data.ipynb), select **Python (CAPRA)**, and run all cells. Both notebooks are committed with executed outputs and show input checks, API-generated splits, training, prediction, the response plot, saved files, and checkpoint reload. The own-data notebook constructs a self-contained `8,568 x 5,025` matrix with realistic dimensions and uses the real GenePT vectors bundled in `demo/data/`.
+
+## Data and citations
+
+The files in `demo/data/` are small, processed demonstration assets committed for reproducibility. They are not a replacement for the original benchmark releases.
+
+- **scPerturBench benchmark and data.** The benchmark protocol and dataset collection used for CAPRA comparisons are described by Wei et al., “Benchmarking algorithms for generalizable single-cell perturbation response prediction,” *Nature Methods* 23, 451–464 (2026), DOI [10.1038/s41592-025-02980-0](https://www.nature.com/articles/s41592-025-02980-0). The authors' benchmark data release is available at [Figshare, DOI 10.6084/m9.figshare.28147883](https://doi.org/10.6084/m9.figshare.28147883); this Figshare record is the download link for the scPerturBench datasets. The Norman experiment is one source dataset in this ecosystem and is also available from NCBI GEO accession [GSE133344](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE133344).
+- **GenePT embeddings.** The demos use the gene-indexed vectors from Chen and Zou, “Simple and effective embedding model for single-cell biology built from ChatGPT,” *Nature Biomedical Engineering* 9, 483–493 (2025), DOI [10.1038/s41551-024-01284-6](https://www.nature.com/articles/s41551-024-01284-6). The embedding archive is available from [Zenodo, DOI 10.5281/zenodo.10833191](https://zenodo.org/doi/10.5281/zenodo.10833191); this Zenodo record is the download link for the GenePT data. The accompanying source code and processing notes are maintained at [yiqunchen/GenePT](https://github.com/yiqunchen/GenePT).
 
 ## Main API
 
